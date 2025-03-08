@@ -4,16 +4,29 @@
 //Create the servo driver object that will do all the "hard" communication for us
 Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
 
-// Maximum and minimum PWM frequency decides how far the servo turns
-// This should be 0-90 degrees but need to test
-const int MAX_PWM_FREQ = 420;
-const int MIN_PWM_FREQ = 290;
+//Maximum and minimum PWM frequency decides how far the servo turns, for our uses 0-90 degrees
+const int MAX_PWM[] = {420, 460, 420};
+const int MIN_PWM[] = {290, 270, 290};
 
-// Doesn't get the owm freq per se but maps the servo angle 0-90 to the drivers pwm output 0-4095
-// where 0 is always low and 4095 is always on (I think still need to test)
-double map_angle(double angle){
-  return (angle * (MAX_PWM_FREQ-MIN_PWM_FREQ)) / 90.0 - MIN_PWM_FREQ;
-  //return map(angle, 0, 90, 0, 4096);
+//Maps angles to pwm frequencies
+int map_angle(int valve_num, int angle){
+  return map(angle, 0, 90, MIN_PWM[valve_num], MAX_PWM[valve_num]);
+}
+
+void open_valve(int valve_num, int angle){
+  driver.setPWM(valve_num, 0, map_angle(valve_num, angle));
+}
+
+void close_valve(int valve_num){
+  driver.setPWM(valve_num, 0, MIN_PWM[valve_num]);
+}
+
+void turn_control_off(){
+  driver.sleep();
+}
+
+void turn_control_on(){
+  driver.wakeup();
 }
 
 void setup() {
@@ -29,36 +42,22 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  // driver.setPWM(0, 0, map_angle(90));
-  // delay(1000);
+  open_valve(0, 60);
+  open_valve(1, 30);
+  delay(1000);
+  close_valve(0);
+  close_valve(1);
+  delay(1000);
 
-  for(int i = 290; i < 420; i++){
-    driver.setPWM(0, 0, i);
-    driver.setPWM(3, 0, i);
-  }
+  // for(int i = 290; i < 420; i++){
+  //   driver.setPWM(0, 0, i);
+  //   driver.setPWM(3, 0, i);
+  // }
 
-  // driver.setPWM(0, 0, 600);
-  delay(500);
+  //delay(500)
 
-  for(int i = 400; i > 290; i--){
-    driver.setPWM(0, 0, i);
-    driver.setPWM(3, 0, i);
-  }
-
-  //driver.setPWM(0, 0, map_angle(23));
-  //delay(1000);
-
-  //driver.setPWM(0, 0, map_angle(45));
-  //delay(1000);
-
-  //driver.setPWM(0, 0, map_angle(68));
-  //delay(1000);
-
-  //driver.setPWM(0, 0, map_angle(0));
-  //delay(1000);
-
-  //driver.setPWM(0, 0, 300);
-  delay(500);
-
+  // for(int i = 400; i > 290; i--){
+  //   driver.setPWM(0, 0, i);
+  //   driver.setPWM(3, 0, i);
+  // }
 }
