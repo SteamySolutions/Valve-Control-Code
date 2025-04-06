@@ -1,5 +1,6 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
+#include "src/temp-sensor.hh"
 
 #define THERMISTOR_PIN A0  // Analog pin for thermistor
 #define SERIES_RESISTOR 50000  // 50kΩ resistor value
@@ -72,28 +73,6 @@ void Pid::set_target(double itarget, double current) {
 }
 
 Pid::Pid(const double ik_p, const double ik_i, const double ik_d): k_p(ik_p), k_i(ik_i), k_d(ik_d){}
-
-class temp_sensor{
-    int in_pin;
-  public:
-    temp_sensor(int input_pin){
-      this->in_pin = input_pin;
-    }
-
-    read_temp(){
-      int adcValue = analogRead(THERMISTOR_PIN);
-      float resistance = SERIES_RESISTOR / ((ADC_MAX / adcValue) - 1);
-    
-      // Steinhart-Hart equation to convert resistance to temperature
-      float temperature;
-      temperature = resistance / NOMINAL_RESISTANCE;      // (R/Ro)
-      temperature = log(temperature);                     // ln(R/Ro)
-      temperature /= B_COEFFICIENT;                       // 1/B * ln(R/Ro)
-      temperature += 1.0 / (NOMINAL_TEMPERATURE + 273.15); // + (1/To)
-      temperature = 1.0 / temperature;                    // Invert
-      temperature -= 273.15;                              // Convert to Celsius
-    }
-};
 
 void setup() {
     // Set serial port (i2c) serial data transmission rate

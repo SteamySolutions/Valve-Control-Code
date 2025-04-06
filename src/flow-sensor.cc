@@ -31,3 +31,14 @@ void loop() {
 void countPulse() {
   pulseCount++;  // Increment pulse count on each falling edge
 }
+
+class FlowSensor {
+  public:
+  FlowSensor(const int isensor_pin): sensor_pin(isensor_pin) {
+    
+  }
+
+  const int sensor_pin;
+  int ticks = 0;
+  
+};
