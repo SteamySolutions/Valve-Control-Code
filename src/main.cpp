@@ -1,13 +1,6 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
-#include "src/temp-sensor.hh"
-
-#define THERMISTOR_PIN A0  // Analog pin for thermistor
-#define SERIES_RESISTOR 50000  // 50kΩ resistor value
-#define NOMINAL_RESISTANCE 50000  // 50kΩ at 25°C
-#define NOMINAL_TEMPERATURE 25  // Nominal temperature (25°C)
-#define B_COEFFICIENT 3950  // Beta coefficient (varies by thermistor)
-#define ADC_MAX 1023.0  // 10-bit ADC resolution
+#include "temp-sensor.hh"
 
 //Create the servo driver object that will do all the "hard" communication for us
 Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
