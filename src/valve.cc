@@ -1,9 +1,6 @@
 #include <Wire.h>
 #include <valve.hh>
 
-//Create the servo driver object that will do all the "hard" communication for us
-Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
-
 Valve::Valve(int pin_num, int max_pwm, int min_pwm, Adafruit_PWMServoDriver& idriver){
   pin = pin_num;
   this->max_pwm = max_pwm;

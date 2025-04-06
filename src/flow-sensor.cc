@@ -1,44 +1,46 @@
-volatile int pulseCount = 0;  // Pulse counter
-const int sensorPin = 2;      // Digital pin with interrupt (e.g., 2 or 3 on Uno)
-unsigned long lastTime = 0;   // For timing
-float flowRate;               // Flow rate in L/hour
-const float pulsesPerLiter = 553;  // Example calibration factor (check datasheet)
+#include <Arduino.h>
 
-void setup() {
-  pinMode(sensorPin, INPUT_PULLUP);  // Enable internal pull-up for NPN
-  attachInterrupt(digitalPinToInterrupt(sensorPin), countPulse, FALLING);  // Interrupt on falling edge
-  Serial.begin(9600);
-  lastTime = millis();
+#include "flow-sensor.hh"
+
+FlowSensor::FlowSensor(const int isensor_pin, const int iticks_per_liter, const int imspt): sensor_pin(isensor_pin), ticks_per_liter(iticks_per_liter), milliseconds_per_update(imspt) {
+  attachInterrupt(digitalPinToInterrupt(sensor_pin), [](){}, RISING);
 }
 
-void loop() {
-  if (millis() - lastTime >= 1000) {  // Calculate every second
-    noInterrupts();  // Disable interrupts briefly to read pulseCount safely
-    int pulses = pulseCount;
-    pulseCount = 0;  // Reset counter
-    interrupts();    // Re-enable interrupts
-
-    // Calculate flow rate (L/hour): pulses per second * (3600 / pulses per liter)
-    flowRate = pulses / pulsesPerLiter;
-    Serial.print("Flow Rate: ");
-    Serial.print(flowRate);
-    Serial.println(" L/sec");
-
-    lastTime = millis();
-  }
+float FlowSensor::get_flow_rate() {
+  noInterrupts();
+  if(millis() - last_tick_time > milliseconds_per_update)
+    this->liters_per_second = 0;
+  return this->liters_per_second;
+  interrupts();
 }
 
-void countPulse() {
-  pulseCount++;  // Increment pulse count on each falling edge
-}
-
-class FlowSensor {
-  public:
-  FlowSensor(const int isensor_pin): sensor_pin(isensor_pin) {
-    
+void FlowSensor::tick() {
+  noInterrupts();
+  uint32_t time = millis();
+  if(time - last_tick_time > milliseconds_per_update) {
+    liters_per_second = 0;
+    ticks = 1;
+    last_tick_time = time;
+    last_update_time = time;
+    interrupts();
+    return;
   }
 
-  const int sensor_pin;
-  int ticks = 0;
-  
-};
+  if(time - last_update_time > milliseconds_per_update) {
+    last_tick_time = time;
+    last_update_time = time;
+
+    float elapsed = ((float)time - last_update_time) / 1000.;
+    float liters = (float)ticks / ticks_per_liter;
+
+    liters_per_second = liters / elapsed;
+
+    ticks = 0;
+    interrupts();
+    return;
+  }
+
+  ticks++;
+  last_tick_time = time;
+  interrupts();
+}
