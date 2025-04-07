@@ -18,5 +18,5 @@ class Valve{
 
   void open(int angle);
   void close();
-
+  int temp_to_hangle(int set_temp, int h_temp, int c_temp);
 };
