@@ -2,6 +2,8 @@
 #include <Adafruit_PWMServoDriver.h>
 #include "temp-sensor.hh"
 #include "valve.hh"
+#include "flow-sensor.hh"
+#include "pid.hh"
 
 //Create the servo driver object that will do all the "hard" communication for us
 Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
@@ -14,7 +16,9 @@ TempSensor * hot;
 TempSensor * cold;
 TempSensor * out; 
 
-bool first = true;
+FlowSensor * hotflow;
+FlowSensor * coldflow;
+FlowSensor * outflow;
 
 void setup() {
     // Set serial port (i2c) serial data transmission rate
@@ -27,29 +31,29 @@ void setup() {
 
   Wire.setClock(400000);
 
-  // put your setup code here, to run once:
-  //hvalve = new Valve(0, 309, 435, driver);
-  cvalve = new Valve(1, 309, 435, driver);
-  //cvalve = new Valve(1, 270, 450, driver);
+  // define hot and cold valve objects
   hvalve = new Valve(0, 270, 450, driver);
-  //bvalve = new Valve(2, 310, 500, driver);
+  cvalve = new Valve(1, 309, 435, driver);
 
+  // define hot, cold, and out temperature sensor objects
   hot = new TempSensor(2, 45000);
   cold = new TempSensor(1);
   out = new TempSensor(0, 47000);
+
+  hotflow = new FlowSensor(2);
+  coldflow = new FlowSensor(3);
+  outflow = new FlowSensor(4);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   
   int hot_angle;
-  //if(first){
-    hot_angle = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp());
-    first = false;
-    Serial.println(hot_angle);
-    hvalve->open(hot_angle);
-    cvalve->open(90-hot_angle);
-  //}
+
+  hot_angle = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp());
+  //Serial.println(hot_angle);
+  hvalve->open(hot_angle);
+  cvalve->open(90-hot_angle);
 
   Serial.print("Hot Temperature: ");
   Serial.print(hot->read_temp());
