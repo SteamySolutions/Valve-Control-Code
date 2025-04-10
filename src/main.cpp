@@ -20,6 +20,17 @@ FlowSensor * hotflow;
 FlowSensor * coldflow;
 FlowSensor * outflow;
 
+void tick_hot() {
+  hotflow->tick();
+}
+
+void tick_cold() {
+  coldflow->tick();
+}
+void tick_mix() {
+  outflow->tick();
+}
+
 void setup() {
     // Set serial port (i2c) serial data transmission rate
   Serial.begin(9600);
@@ -40,9 +51,9 @@ void setup() {
   cold = new TempSensor(1);
   out = new TempSensor(0, 47000);
 
-  hotflow = new FlowSensor(2);
-  coldflow = new FlowSensor(3);
-  outflow = new FlowSensor(4);
+  hotflow = new FlowSensor(8, 553, 250, tick_hot);
+  coldflow = new FlowSensor(4, 553, 250, tick_cold);
+  outflow = new FlowSensor(7, 553, 250, tick_mix);
 }
 
 void loop() {
@@ -57,14 +68,24 @@ void loop() {
 
   Serial.print("Hot Temperature: ");
   Serial.print(hot->read_temp());
-  Serial.println("F");
+  Serial.print("F ");
+  Serial.print("Hot flow: ");
+  Serial.print(hotflow->get_flow_rate());
+  Serial.println("L/s");
+
 
   Serial.print("Cold Temperature: ");
   Serial.print(cold->read_temp());
-  Serial.println("F");
+  Serial.print("F ");
+  Serial.print("Cold flow: ");
+  Serial.print(coldflow->get_flow_rate());
+  Serial.println("L/s");
 
   Serial.print("Out Temperature: ");
   Serial.print(out->read_temp());
-  Serial.println("F");
+  Serial.print("F ");
+  Serial.print("Out flow: ");
+  Serial.print(outflow->get_flow_rate());
+  Serial.println("L/s");
   delay(1000);
 }
