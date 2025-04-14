@@ -59,6 +59,8 @@ void setup() {
 
 unsigned long t0 = millis();
 
+Pid flow_pid(.3, 0.1, 0);
+
 void loop() {
   // put your main code here, to run repeatedly:
 
@@ -66,14 +68,37 @@ void loop() {
   coldflow->check();
   outflow->check();
   
-  int hot_angle;
-
   if(millis() - t0 > 1000) {
     t0 = millis();
-    hot_angle = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp());
-    //Serial.println(hot_angle);
-    hvalve->open(hot_angle);
-    cvalve->open(90-hot_angle);
+    double hot_proportion = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp()) / 90.;
+    double cold_proportion = 1 - hot_proportion;
+
+    double hfr = hotflow->get_flow_rate();
+    double cfr = coldflow->get_flow_rate();
+
+    double maxfr = max(hfr, cfr);
+
+    hfr /= maxfr;
+    cfr /= maxfr;
+
+    double flow_bias = hfr - cfr; // 0 -> flow is almost equal, >0 -> flow is biased towards hot, <0 -> flow is biased towards cold
+    double flow_pbias = hot_proportion - cold_proportion;
+    double flow_error = flow_pbias - flow_bias;
+
+    double output = flow_pid.step(flow_error, 1);
+
+    double houtput, coutput;
+    if(output > 0) {
+      houtput = 1.;
+      coutput = 1. - output;
+    } else {
+      coutput = 1.;
+      houtput = 1. + output;
+    }
+
+    hvalve->open(houtput * 90);
+    cvalve->open(coutput * 90);
+    
 
     Serial.print("Hot Temperature: ");
     Serial.print(hot->read_temp());
