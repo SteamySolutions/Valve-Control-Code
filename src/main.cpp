@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 #include "Arduino.h"
+#include "HardwareSerial.h"
 #include "temp-sensor.hh"
 #include "valve.hh"
 #include "flow-sensor.hh"
@@ -83,6 +84,10 @@ void setup() {
 
 unsigned long t0 = millis();
 
+Pid flow_pid(.1, 0.05, 0);
+
+double clamp(double, double, double);
+
 void loop() {
   // put your main code here, to run repeatedly:
 
@@ -90,17 +95,49 @@ void loop() {
   coldflow->check();
   outflow->check();
   
-  int hot_angle;
-
   if(millis() - t0 > 1000) {
     t0 = millis();
-    hot_angle = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp());
-    //Serial.println(hot_angle);
-    hvalve->open(90);
-    delay(1000);
-    hvalve->open(0);
-    delay(1000);
-    //cvalve->open(90-hot_angle);
+    double hot_proportion = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp()) / 90.;
+    double cold_proportion = 1 - hot_proportion;
+
+    double hfr = hotflow->get_flow_rate();
+    double cfr = coldflow->get_flow_rate();
+
+    double maxfr = max(hfr, cfr);
+
+    if(maxfr > 0) {
+      hfr /= maxfr;
+      cfr /= maxfr;
+    }
+    else return;
+
+
+    Serial.println(hfr);
+
+    double flow_bias = hfr - cfr; // 0 -> flow is almost equal, >0 -> flow is biased towards hot, <0 -> flow is biased towards cold
+    double flow_pbias = hot_proportion - cold_proportion;
+    double flow_error = flow_pbias - flow_bias;
+
+    flow_pid.set_target(flow_pbias, 0);
+
+    double output = flow_pid.step(flow_bias, 1);
+
+    output = clamp(output, -1, 1);
+
+    Serial.println(output);
+
+    double houtput, coutput;
+    if(output > 0) {
+      houtput = 1.;
+      coutput = 1. - output;
+    } else {
+      coutput = 1.;
+      houtput = 1. + output;
+    }
+
+    hvalve->open(houtput * 90);
+    cvalve->open(coutput * 90);
+    
 
     Serial.print("Hot Temperature: ");
     Serial.print(hot->read_temp());
