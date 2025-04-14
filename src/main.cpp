@@ -7,28 +7,6 @@
 #include "flow-sensor.hh"
 #include "pid.hh"
 
-// void read_serial(){
-//   if(Serial.available() > 0){
-//     unsigned char command = Serial.read();
-//     if(command = 'E'){
-//       delay(100);
-//       int newTemp = Serial.parseInt();
-//       Serial.println(newTemp);
-//     }
-//     else if (command = 'T'){
-//       if(shower){
-//         shower = false;
-//         hvalve->close();
-//         cvalve->close();
-//       }  
-//       else{
-//         shower = true;
-//       }
-//     }
-//   }
-//   delay(100);
-// }
-
 //Create the servo driver object that will do all the "hard" communication for us
 Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
 
@@ -44,7 +22,38 @@ FlowSensor * hotflow;
 FlowSensor * coldflow;
 FlowSensor * outflow;
 
+Pid flow_pid(.1, 0.05, 0);
+
+int set_temp;
+
 bool shower;
+
+void read_serial(){
+  if(Serial.available() > 0){
+    unsigned char command = Serial.read();
+    if(command = 'E'){
+      delay(100);
+      int newTemp = Serial.parseInt();
+      set_temp = newTemp;
+      Serial.println(newTemp);
+    }
+    else if (command = 'T'){
+      if(shower){
+        shower = false;
+        hvalve->close();
+        cvalve->close();
+        delay(1000);
+        driver.sleep();
+      }  
+      else{
+        shower = true;
+        driver.wakeup();
+        delay(1000);
+      }
+    }
+  }
+  delay(100);
+}
 
 void tick_hot() {
   hotflow->tick();
@@ -68,6 +77,10 @@ void setup() {
 
   Wire.setClock(400000);
 
+  //vars for the control loop from communication protocol
+  shower = false;
+  set_temp = 80;
+
   // define hot and cold valve objects
   hvalve = new Valve(0, 280, 460, driver);
   cvalve = new Valve(1, 309, 435, driver);
@@ -84,12 +97,12 @@ void setup() {
 
 unsigned long t0 = millis();
 
-Pid flow_pid(.1, 0.05, 0);
-
 double clamp(double, double, double);
 
 void loop() {
   // put your main code here, to run repeatedly:
+  
+  read_serial();
 
   hotflow->check();
   coldflow->check();
@@ -97,7 +110,7 @@ void loop() {
   
   if(millis() - t0 > 1000) {
     t0 = millis();
-    double hot_proportion = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp()) / 90.;
+    double hot_proportion = hvalve->temp_to_hangle(set_temp, hot->read_temp(), cold->read_temp()) / 90.;
     double cold_proportion = 1 - hot_proportion;
 
     double hfraw = hotflow->get_flow_rate();
@@ -142,8 +155,10 @@ void loop() {
       houtput = 1. + output;
     }
 
-    hvalve->open(houtput * 90);
-    cvalve->open(coutput * 90);
+    if(shower){
+      hvalve->open(houtput * 90);
+      cvalve->open(coutput * 90);
+    }
     
 
     Serial.print("Hot Temperature: ");
@@ -167,5 +182,9 @@ void loop() {
     Serial.print("Out flow: ");
     Serial.print(outflow->get_flow_rate());
     Serial.println("L/s");
+
+    if(Serial.available() > 0){
+      read_serial();
+    }
   }
 }
