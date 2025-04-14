@@ -100,8 +100,11 @@ void loop() {
     double hot_proportion = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp()) / 90.;
     double cold_proportion = 1 - hot_proportion;
 
-    double hfr = hotflow->get_flow_rate();
-    double cfr = coldflow->get_flow_rate();
+    double hfraw = hotflow->get_flow_rate();
+    double cfraw = coldflow->get_flow_rate();
+
+    double hfr = hfraw;
+    double cfr = cfraw;
 
     double maxfr = max(hfr, cfr);
 
@@ -109,7 +112,11 @@ void loop() {
       hfr /= maxfr;
       cfr /= maxfr;
     }
-    else return;
+    else {
+      maxfr = 1;
+      hfr /= maxfr;
+      cfr /= maxfr;
+    };
 
 
     Serial.println(hfr);
@@ -143,7 +150,7 @@ void loop() {
     Serial.print(hot->read_temp());
     Serial.print("F ");
     Serial.print("Hot flow: ");
-    Serial.print(hotflow->get_flow_rate());
+    Serial.print(hfraw);
     Serial.println("L/s");
 
 
@@ -151,7 +158,7 @@ void loop() {
     Serial.print(cold->read_temp());
     Serial.print("F ");
     Serial.print("Cold flow: ");
-    Serial.print(coldflow->get_flow_rate());
+    Serial.print(cfraw);
     Serial.println("L/s");
 
     Serial.print("Out Temperature: ");

@@ -11,15 +11,16 @@ class FlowSensor {
    */
   void check();
   float get_flow_rate();
+  void update();
 
   const int sensor_pin;
   const int ticks_per_liter;
   const int milliseconds_per_update;
-  int last_update_time;
-  int last_tick_time;
+  unsigned long last_update_time;
+  unsigned long last_tick_time;
   float liters_per_second {0};
-  int ticks {0};
+  long ticks {0};
 
-  int last_state {LOW};
+  int last_state {0};
   
 };
