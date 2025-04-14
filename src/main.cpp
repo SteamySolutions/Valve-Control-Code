@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 #include "Arduino.h"
+#include "HardwareSerial.h"
 #include "temp-sensor.hh"
 #include "valve.hh"
 #include "flow-sensor.hh"
@@ -59,7 +60,9 @@ void setup() {
 
 unsigned long t0 = millis();
 
-Pid flow_pid(.3, 0.1, 0);
+Pid flow_pid(.1, 0.05, 0);
+
+double clamp(double, double, double);
 
 void loop() {
   // put your main code here, to run repeatedly:
@@ -78,14 +81,26 @@ void loop() {
 
     double maxfr = max(hfr, cfr);
 
-    hfr /= maxfr;
-    cfr /= maxfr;
+    if(maxfr > 0) {
+      hfr /= maxfr;
+      cfr /= maxfr;
+    }
+    else return;
+
+
+    Serial.println(hfr);
 
     double flow_bias = hfr - cfr; // 0 -> flow is almost equal, >0 -> flow is biased towards hot, <0 -> flow is biased towards cold
     double flow_pbias = hot_proportion - cold_proportion;
     double flow_error = flow_pbias - flow_bias;
 
-    double output = flow_pid.step(flow_error, 1);
+    flow_pid.set_target(flow_pbias, 0);
+
+    double output = flow_pid.step(flow_bias, 1);
+
+    output = clamp(output, -1, 1);
+
+    Serial.println(output);
 
     double houtput, coutput;
     if(output > 0) {
