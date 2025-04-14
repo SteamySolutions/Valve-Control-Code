@@ -6,6 +6,28 @@
 #include "flow-sensor.hh"
 #include "pid.hh"
 
+// void read_serial(){
+//   if(Serial.available() > 0){
+//     unsigned char command = Serial.read();
+//     if(command = 'E'){
+//       delay(100);
+//       int newTemp = Serial.parseInt();
+//       Serial.println(newTemp);
+//     }
+//     else if (command = 'T'){
+//       if(shower){
+//         shower = false;
+//         hvalve->close();
+//         cvalve->close();
+//       }  
+//       else{
+//         shower = true;
+//       }
+//     }
+//   }
+//   delay(100);
+// }
+
 //Create the servo driver object that will do all the "hard" communication for us
 Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
 
@@ -20,6 +42,8 @@ TempSensor * out;
 FlowSensor * hotflow;
 FlowSensor * coldflow;
 FlowSensor * outflow;
+
+bool shower;
 
 void tick_hot() {
   hotflow->tick();
@@ -44,7 +68,7 @@ void setup() {
   Wire.setClock(400000);
 
   // define hot and cold valve objects
-  hvalve = new Valve(0, 270, 450, driver);
+  hvalve = new Valve(0, 280, 460, driver);
   cvalve = new Valve(1, 309, 435, driver);
 
   // define hot, cold, and out temperature sensor objects
@@ -72,8 +96,11 @@ void loop() {
     t0 = millis();
     hot_angle = hvalve->temp_to_hangle(90, hot->read_temp(), cold->read_temp());
     //Serial.println(hot_angle);
-    hvalve->open(hot_angle);
-    cvalve->open(90-hot_angle);
+    hvalve->open(90);
+    delay(1000);
+    hvalve->open(0);
+    delay(1000);
+    //cvalve->open(90-hot_angle);
 
     Serial.print("Hot Temperature: ");
     Serial.print(hot->read_temp());
