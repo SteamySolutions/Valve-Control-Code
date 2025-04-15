@@ -31,17 +31,22 @@ bool shower;
 void read_serial(){
   if(Serial.available() > 0){
     unsigned char command = Serial.read();
-    if(command = 'E'){
+    if(command == 'E'){
       delay(100);
       int newTemp = Serial.parseInt();
       set_temp = newTemp;
       Serial.println(newTemp);
     }
-    else if (command = 'T'){
+    else if (command == 'T'){
       if(shower){
+        //stop updating the motor angle
         shower = false;
+
+        //close the hot and cold valves
         hvalve->close();
         cvalve->close();
+
+        //Put the motor diriver to sleep so it's not drawing power
         delay(1000);
         driver.sleep();
       }  
@@ -53,6 +58,20 @@ void read_serial(){
     }
   }
   delay(100);
+}
+
+void write_serial(char code, int val1, int val2){
+  //Write the intial code so RPi knows what it is getting
+  Serial.write(code);
+  delay(500);
+  if(code == 'A'){
+    Serial.write(val1);
+  }
+  else if(code == 'B'){
+    Serial.write(val1);
+    delay(500);
+    Serial.write(val2);
+  }
 }
 
 void tick_hot() {
