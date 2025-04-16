@@ -1,5 +1,6 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
+#include <OneWire.h>
 #include "Arduino.h"
 #include "HardwareSerial.h"
 #include "temp-sensor.hh"
@@ -13,6 +14,10 @@ Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
 Valve * hvalve;
 Valve * cvalve;
 Valve * bvalve;
+
+OneWire hwire(2);
+OneWire cwire(3);
+OneWire owire(5);
 
 TempSensor * hot;
 TempSensor * cold;
@@ -88,6 +93,7 @@ void tick_mix() {
 void setup() {
     // Set serial port (i2c) serial data transmission rate
   Serial.begin(9600);
+  Serial.println("Begin Set up");
 
   driver.begin();
 
@@ -97,17 +103,22 @@ void setup() {
   Wire.setClock(400000);
 
   //vars for the control loop from communication protocol
-  shower = false;
+  shower = true;
   set_temp = 80;
 
-  // define hot and cold valve objects
+  Serial.println("Define the valves");
+    // define hot and cold valve objects
   hvalve = new Valve(0, 280, 460, driver);
   cvalve = new Valve(1, 309, 435, driver);
 
-  // define hot, cold, and out temperature sensor objects
-  hot = new TempSensor(2, 45000);
-  cold = new TempSensor(1);
-  out = new TempSensor(0, 47000);
+  Serial.println("Define temp sensors");
+    // define hot, cold, and out temperature sensor objects
+  //Yellow wire
+  hot = new TempSensor(&hwire);
+  //green wire
+  cold = new TempSensor(&cwire);
+  //Brown wire
+  out = new TempSensor(&owire);
 
   hotflow = new FlowSensor(8, 553, 250);
   coldflow = new FlowSensor(4, 553, 250);
@@ -119,6 +130,7 @@ unsigned long t0 = millis();
 double clamp(double, double, double);
 
 void loop() {
+  delay(1000);
   // put your main code here, to run repeatedly:
   
   read_serial();
@@ -182,7 +194,8 @@ void loop() {
 
     Serial.print("Hot Temperature: ");
     Serial.print(hot->read_temp());
-    Serial.print("F ");
+    Serial.println("F ");
+    delay(1000);
     Serial.print("Hot flow: ");
     Serial.print(hfraw);
     Serial.println("L/s");
@@ -190,14 +203,15 @@ void loop() {
 
     Serial.print("Cold Temperature: ");
     Serial.print(cold->read_temp());
-    Serial.print("F ");
+    Serial.println("F ");
+    delay(1000);
     Serial.print("Cold flow: ");
     Serial.print(cfraw);
     Serial.println("L/s");
 
     Serial.print("Out Temperature: ");
     Serial.print(out->read_temp());
-    Serial.print("F ");
+    Serial.println("F ");
     Serial.print("Out flow: ");
     Serial.print(outflow->get_flow_rate());
     Serial.println("L/s");
