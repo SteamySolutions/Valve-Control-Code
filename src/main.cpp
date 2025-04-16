@@ -15,8 +15,8 @@ Valve * hvalve;
 Valve * cvalve;
 Valve * bvalve;
 
-OneWire hwire(2);
-OneWire cwire(3);
+OneWire hwire(3);
+OneWire cwire(2);
 OneWire owire(5);
 
 TempSensor * hot;
@@ -62,7 +62,6 @@ void read_serial(){
       }
     }
   }
-  delay(100);
 }
 
 void write_serial(char code, int val1, int val2){
@@ -104,7 +103,7 @@ void setup() {
 
   //vars for the control loop from communication protocol
   shower = true;
-  set_temp = 80;
+  set_temp = 100;
 
   Serial.println("Define the valves");
     // define hot and cold valve objects
@@ -123,6 +122,10 @@ void setup() {
   hotflow = new FlowSensor(8, 553, 250);
   coldflow = new FlowSensor(4, 553, 250);
   outflow = new FlowSensor(7, 553, 250);
+
+  hot->request();
+  cold->request();
+  out->request();
 }
 
 unsigned long t0 = millis();
@@ -130,11 +133,6 @@ unsigned long t0 = millis();
 double clamp(double, double, double);
 
 void loop() {
-  delay(1000);
-  // put your main code here, to run repeatedly:
-  
-  read_serial();
-
   hotflow->check();
   coldflow->check();
   outflow->check();
@@ -195,7 +193,6 @@ void loop() {
     Serial.print("Hot Temperature: ");
     Serial.print(hot->read_temp());
     Serial.println("F ");
-    delay(1000);
     Serial.print("Hot flow: ");
     Serial.print(hfraw);
     Serial.println("L/s");
@@ -204,7 +201,6 @@ void loop() {
     Serial.print("Cold Temperature: ");
     Serial.print(cold->read_temp());
     Serial.println("F ");
-    delay(1000);
     Serial.print("Cold flow: ");
     Serial.print(cfraw);
     Serial.println("L/s");
@@ -216,8 +212,11 @@ void loop() {
     Serial.print(outflow->get_flow_rate());
     Serial.println("L/s");
 
-    if(Serial.available() > 0){
-      read_serial();
-    }
+    // if(Serial.available() > 0){
+    //   read_serial();
+    // }
+    hot->request();
+    cold->request();
+    out->request();
   }
 }

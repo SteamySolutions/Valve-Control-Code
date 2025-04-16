@@ -1,6 +1,8 @@
 #include <temp-sensor.hh>
 
-float TempSensor::read_temp(){
+void TempSensor::request(){
   sensor->requestTemperatures();
+}
+float TempSensor::read_temp(){
   return sensor->getTempFByIndex(0);
 }
