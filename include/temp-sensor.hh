@@ -13,4 +13,5 @@ class TempSensor{
     
     void request();
     float read_temp();
+    float read_tempC();
 };

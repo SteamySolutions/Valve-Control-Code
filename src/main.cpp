@@ -17,7 +17,7 @@ Valve * bvalve;
 
 OneWire hwire(3);
 OneWire cwire(2);
-OneWire owire(5);
+OneWire owire(12);
 
 TempSensor * hot;
 TempSensor * cold;
@@ -27,7 +27,7 @@ FlowSensor * hotflow;
 FlowSensor * coldflow;
 FlowSensor * outflow;
 
-Pid flow_pid(.1, 0.05, 0);
+Pid flow_pid(.1, 0.2, 0);
 
 int set_temp;
 
@@ -36,8 +36,12 @@ bool shower;
 void read_serial(){
   if(Serial.available() > 0){
     unsigned char command = Serial.read();
-    if(command == 'E'){
-      delay(100);
+    Serial.print("The command is: ");
+    Serial.println(command);
+    int newTemp = Serial.read();
+    Serial.print("The new temp is: ");
+    Serial.println(newTemp);
+    if(command == 'S'){
       int newTemp = Serial.parseInt();
       set_temp = newTemp;
       Serial.println(newTemp);
@@ -92,7 +96,7 @@ void tick_mix() {
 void setup() {
     // Set serial port (i2c) serial data transmission rate
   Serial.begin(9600);
-  Serial.println("Begin Set up");
+  //Serial.println("Begin Set up");
 
   driver.begin();
 
@@ -103,14 +107,14 @@ void setup() {
 
   //vars for the control loop from communication protocol
   shower = true;
-  set_temp = 100;
+  set_temp = 90;
 
-  Serial.println("Define the valves");
+  //Serial.println("Define the valves");
     // define hot and cold valve objects
   hvalve = new Valve(0, 280, 460, driver);
   cvalve = new Valve(1, 309, 435, driver);
 
-  Serial.println("Define temp sensors");
+  //Serial.println("Define temp sensors");
     // define hot, cold, and out temperature sensor objects
   //Yellow wire
   hot = new TempSensor(&hwire);
@@ -139,7 +143,11 @@ void loop() {
   
   if(millis() - t0 > 1000) {
     t0 = millis();
-    double hot_proportion = hvalve->temp_to_hangle(set_temp, hot->read_temp(), cold->read_temp()) / 90.;
+    float hot_temp = hot->read_temp();
+    float cold_temp = cold->read_temp();
+    float out_temp = out->read_temp();
+    //double hot_proportion = hvalve->temp_to_hangle(set_temp, hot->read_temp(), cold->read_temp()) / 90.;
+    double hot_proportion = hvalve->temp_to_hangle(set_temp, hot_temp, cold_temp) / 90.;
     double cold_proportion = 1 - hot_proportion;
 
     double hfraw = hotflow->get_flow_rate();
@@ -161,7 +169,7 @@ void loop() {
     };
 
 
-    Serial.println(hfr);
+    //Serial.println(hfr);
 
     double flow_bias = hfr - cfr; // 0 -> flow is almost equal, >0 -> flow is biased towards hot, <0 -> flow is biased towards cold
     double flow_pbias = hot_proportion - cold_proportion;
@@ -173,7 +181,7 @@ void loop() {
 
     output = clamp(output, -1, 1);
 
-    Serial.println(output);
+    //Serial.println(output);
 
     double houtput, coutput;
     if(output > 0) {
@@ -191,7 +199,7 @@ void loop() {
     
 
     Serial.print("Hot Temperature: ");
-    Serial.print(hot->read_temp());
+    Serial.print(hot_temp);
     Serial.println("F ");
     Serial.print("Hot flow: ");
     Serial.print(hfraw);
@@ -199,24 +207,25 @@ void loop() {
 
 
     Serial.print("Cold Temperature: ");
-    Serial.print(cold->read_temp());
+    Serial.print(cold_temp);
     Serial.println("F ");
     Serial.print("Cold flow: ");
     Serial.print(cfraw);
     Serial.println("L/s");
 
     Serial.print("Out Temperature: ");
-    Serial.print(out->read_temp());
+    Serial.print(out_temp);
     Serial.println("F ");
     Serial.print("Out flow: ");
     Serial.print(outflow->get_flow_rate());
     Serial.println("L/s");
 
-    // if(Serial.available() > 0){
-    //   read_serial();
-    // }
+    if(Serial.available() > 0){
+      read_serial();
+    }
     hot->request();
-    cold->request();
     out->request();
+    cold->request();
+    
   }
 }
