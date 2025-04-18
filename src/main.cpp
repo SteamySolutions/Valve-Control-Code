@@ -36,15 +36,9 @@ bool shower;
 void read_serial(){
   if(Serial.available() > 0){
     unsigned char command = Serial.read();
-    //Serial.print("The command is: ");
-    //Serial.println(command);
-    int newTemp = Serial.read();
-    //Serial.print("The new temp is: ");
-    //Serial.println(newTemp);
     if(command == 'S'){
       int newTemp = Serial.parseInt();
       set_temp = newTemp;
-      //Serial.println(newTemp);
     }
     else if (command == 'T'){
       if(shower){
@@ -106,7 +100,7 @@ void setup() {
   Wire.setClock(400000);
 
   //vars for the control loop from communication protocol
-  shower = true;
+  shower = false;
   set_temp = 90;
 
   //Serial.println("Define the valves");
@@ -223,9 +217,9 @@ void loop() {
     if(Serial.available() > 0){
       read_serial();
     }
+    
     hot->request();
     out->request();
     cold->request();
-    
   }
 }
