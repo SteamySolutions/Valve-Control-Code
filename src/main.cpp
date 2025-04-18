@@ -36,15 +36,15 @@ bool shower;
 void read_serial(){
   if(Serial.available() > 0){
     unsigned char command = Serial.read();
-    Serial.print("The command is: ");
-    Serial.println(command);
+    //Serial.print("The command is: ");
+    //Serial.println(command);
     int newTemp = Serial.read();
-    Serial.print("The new temp is: ");
-    Serial.println(newTemp);
+    //Serial.print("The new temp is: ");
+    //Serial.println(newTemp);
     if(command == 'S'){
       int newTemp = Serial.parseInt();
       set_temp = newTemp;
-      Serial.println(newTemp);
+      //Serial.println(newTemp);
     }
     else if (command == 'T'){
       if(shower){
@@ -68,7 +68,7 @@ void read_serial(){
   }
 }
 
-void write_serial(char code, int val1, int val2){
+void write_serial(unsigned char code, int val1, int val2){
   //Write the intial code so RPi knows what it is getting
   Serial.write(code);
   delay(500);
@@ -198,27 +198,27 @@ void loop() {
     }
     
 
-    Serial.print("Hot Temperature: ");
-    Serial.print(hot_temp);
-    Serial.println("F ");
-    Serial.print("Hot flow: ");
-    Serial.print(hfraw);
-    Serial.println("L/s");
+    // Serial.print("Hot Temperature: ");
+    // Serial.print(hot_temp);
+    // Serial.println("F ");
+    // Serial.print("Hot flow: ");
+    // Serial.print(hfraw);
+    // Serial.println("L/s");
 
 
-    Serial.print("Cold Temperature: ");
-    Serial.print(cold_temp);
-    Serial.println("F ");
-    Serial.print("Cold flow: ");
-    Serial.print(cfraw);
-    Serial.println("L/s");
+    // Serial.print("Cold Temperature: ");
+    // Serial.print(cold_temp);
+    // Serial.println("F ");
+    // Serial.print("Cold flow: ");
+    // Serial.print(cfraw);
+    // Serial.println("L/s");
 
-    Serial.print("Out Temperature: ");
+    //Serial.print("Out Temperature: ");
     Serial.print(out_temp);
-    Serial.println("F ");
-    Serial.print("Out flow: ");
-    Serial.print(outflow->get_flow_rate());
-    Serial.println("L/s");
+    //Serial.println("F ");
+    //Serial.print("Out flow: ");
+    //Serial.print(outflow->get_flow_rate());
+    //Serial.println("L/s");
 
     if(Serial.available() > 0){
       read_serial();
