@@ -6,11 +6,14 @@ class Pid {
 
   double step(double current, double time_elapsed);
   void set_target(double itarget, double current);
+  void set_kff(double ikff);
+  void update_kff();
 
   private:
   const double k_p;
   const double k_i;
   const double k_d;
+  double k_ff {0.0};
 
   double target {0.0};
   double previous {0.0};
