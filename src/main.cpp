@@ -49,6 +49,8 @@ void read_serial(){
         hvalve->close();
         cvalve->close();
 
+        flow_pid.update_kff();
+
         //Put the motor diriver to sleep so it's not drawing power
         delay(1000);
         driver.sleep();
