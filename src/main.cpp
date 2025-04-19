@@ -37,7 +37,7 @@ void read_serial(){
   if(Serial.available() > 0){
     unsigned char command = Serial.read();
     if(command == 'S'){
-      int newTemp = Serial.parseInt();
+      int newTemp = atoi(Serial.readStringUntil('\n').c_str());
       set_temp = newTemp;
     }
     else if (command == 'T'){
@@ -62,6 +62,8 @@ void read_serial(){
       }
     }
   }
+
+  Serial.flush();
 }
 
 void write_serial(unsigned char code, int val1, int val2){
@@ -210,7 +212,7 @@ void loop() {
     // Serial.println("L/s");
 
     //Serial.print("Out Temperature: ");
-    Serial.print(out_temp);
+    Serial.println(out_temp);
     //Serial.println("F ");
     //Serial.print("Out flow: ");
     //Serial.print(outflow->get_flow_rate());
