@@ -17,7 +17,7 @@ Valve * bvalve;
 
 OneWire hwire(3);
 OneWire cwire(2);
-OneWire owire(12);
+OneWire owire(13);
 
 TempSensor * hot;
 TempSensor * cold;
@@ -37,6 +37,7 @@ void read_serial(){
   if(Serial.available() > 0){
     unsigned char command = Serial.read();
     if(command == 'S'){
+      Serial.setTimeout(30);
       int newTemp = atoi(Serial.readStringUntil('\n').c_str());
       set_temp = newTemp;
     }
@@ -196,20 +197,20 @@ void loop() {
     }
     
 
-    // Serial.print("Hot Temperature: ");
-    // Serial.print(hot_temp);
-    // Serial.println("F ");
-    // Serial.print("Hot flow: ");
-    // Serial.print(hfraw);
-    // Serial.println("L/s");
+    Serial.print("Hot Temperature: ");
+    Serial.print(hot_temp);
+    Serial.println("F ");
+    Serial.print("Hot flow: ");
+    Serial.print(hfraw);
+    Serial.println("L/s");
 
 
-    // Serial.print("Cold Temperature: ");
-    // Serial.print(cold_temp);
-    // Serial.println("F ");
-    // Serial.print("Cold flow: ");
-    // Serial.print(cfraw);
-    // Serial.println("L/s");
+    Serial.print("Cold Temperature: ");
+    Serial.print(cold_temp);
+    Serial.println("F ");
+    Serial.print("Cold flow: ");
+    Serial.print(cfraw);
+    Serial.println("L/s");
 
     //Serial.print("Out Temperature: ");
     Serial.println(out_temp);
