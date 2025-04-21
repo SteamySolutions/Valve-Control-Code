@@ -8,6 +8,9 @@
 #include "flow-sensor.hh"
 #include "pid.hh"
 
+// Tuning parameter for fixing the tuned temperature
+const double TEMPERATURE_OFFSET = 7;
+
 //Create the servo driver object that will do all the "hard" communication for us
 Adafruit_PWMServoDriver driver = Adafruit_PWMServoDriver();
 
@@ -50,7 +53,7 @@ void read_serial(){
         hvalve->close();
         cvalve->close();
 
-        flow_pid.update_kff();
+        //flow_pid.update_kff();
 
         //Put the motor diriver to sleep so it's not drawing power
         delay(1000);
@@ -106,7 +109,7 @@ void setup() {
 
   //vars for the control loop from communication protocol
   shower = false;
-  set_temp = 90;
+  set_temp = 100;
 
   //Serial.println("Define the valves");
     // define hot and cold valve objects
@@ -148,7 +151,7 @@ void loop() {
     float cold_temp = cold->read_temp();
     float out_temp = out->read_temp();
     //double hot_proportion = hvalve->temp_to_hangle(set_temp, hot->read_temp(), cold->read_temp()) / 90.;
-    double hot_proportion = hvalve->temp_to_hangle(set_temp, hot_temp, cold_temp) / 90.;
+    double hot_proportion = hvalve->temp_to_hangle(set_temp - TEMPERATURE_OFFSET, hot_temp, cold_temp) / 90.;
     double cold_proportion = 1 - hot_proportion;
 
     double hfraw = hotflow->get_flow_rate();
@@ -219,8 +222,15 @@ void loop() {
       Serial.println(out_temp);
       last_out_temp = out_temp;
     }
-    else
-      Serial.println(last_out_temp);
+    else {
+      if(hfr == 0 && cfr == 0)
+        hfr = (cfr = 1);
+      double hot_ratio = hfr / (hfr + cfr);
+      double cold_ratio = cfr / (hfr + cfr);
+
+      out_temp = hot_ratio * hot_temp + cold_ratio * cold_temp + TEMPERATURE_OFFSET;
+      Serial.println(out_temp);
+    }
     //Serial.println("F ");
     //Serial.print("Out flow: ");
     //Serial.print(outflow->get_flow_rate());
