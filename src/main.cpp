@@ -199,20 +199,20 @@ void loop() {
     }
     
 
-    Serial.print("Hot Temperature: ");
-    Serial.print(hot_temp);
-    Serial.println("F ");
-    Serial.print("Hot flow: ");
-    Serial.print(hfraw);
-    Serial.println("L/s");
+    // Serial.print("Hot Temperature: ");
+    // Serial.print(hot_temp);
+    // Serial.println("F ");
+    // Serial.print("Hot flow: ");
+    // Serial.print(hfraw);
+    // Serial.println("L/s");
 
 
-    Serial.print("Cold Temperature: ");
-    Serial.print(cold_temp);
-    Serial.println("F ");
-    Serial.print("Cold flow: ");
-    Serial.print(cfraw);
-    Serial.println("L/s");
+    // Serial.print("Cold Temperature: ");
+    // Serial.print(cold_temp);
+    // Serial.println("F ");
+    // Serial.print("Cold flow: ");
+    // Serial.print(cfraw);
+    // Serial.println("L/s");
 
     //Serial.print("Out Temperature: ");
     if(out_temp >= 0) {
