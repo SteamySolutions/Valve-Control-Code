@@ -135,6 +135,8 @@ unsigned long t0 = millis();
 
 double clamp(double, double, double);
 
+double last_out_temp = 70;
+
 void loop() {
   hotflow->check();
   coldflow->check();
@@ -213,7 +215,12 @@ void loop() {
     Serial.println("L/s");
 
     //Serial.print("Out Temperature: ");
-    Serial.println(out_temp);
+    if(out_temp >= 0) {
+      Serial.println(out_temp);
+      last_out_temp = out_temp;
+    }
+    else
+      Serial.println(last_out_temp);
     //Serial.println("F ");
     //Serial.print("Out flow: ");
     //Serial.print(outflow->get_flow_rate());
