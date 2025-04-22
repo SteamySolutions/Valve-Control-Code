@@ -7,7 +7,6 @@ FlowSensor::FlowSensor(const int isensor_pin, const int iticks_per_liter, const 
 }
 
 float FlowSensor::get_flow_rate() {
-  //noInterrupts();
   update();
   return this->liters_per_second;
 }

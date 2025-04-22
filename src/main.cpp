@@ -8,6 +8,8 @@
 #include "flow-sensor.hh"
 #include "pid.hh"
 
+#define DEBUG false
+
 // Tuning parameter for fixing the tuned temperature
 const double TEMPERATURE_OFFSET = 7;
 
@@ -70,20 +72,6 @@ void read_serial(){
   Serial.flush();
 }
 
-void write_serial(unsigned char code, int val1, int val2){
-  //Write the intial code so RPi knows what it is getting
-  Serial.write(code);
-  delay(500);
-  if(code == 'A'){
-    Serial.write(val1);
-  }
-  else if(code == 'B'){
-    Serial.write(val1);
-    delay(500);
-    Serial.write(val2);
-  }
-}
-
 void tick_hot() {
   hotflow->tick();
 }
@@ -96,9 +84,8 @@ void tick_mix() {
 }
 
 void setup() {
-    // Set serial port (i2c) serial data transmission rate
+  // Set serial port (i2c) serial data transmission rate
   Serial.begin(9600);
-  //Serial.println("Begin Set up");
 
   driver.begin();
 
@@ -111,18 +98,13 @@ void setup() {
   shower = false;
   set_temp = 100;
 
-  //Serial.println("Define the valves");
     // define hot and cold valve objects
   hvalve = new Valve(0, 280, 460, driver);
   cvalve = new Valve(1, 309, 435, driver);
 
-  //Serial.println("Define temp sensors");
-    // define hot, cold, and out temperature sensor objects
-  //Yellow wire
+  // define hot, cold, and out temperature sensor objects
   hot = new TempSensor(&hwire);
-  //green wire
   cold = new TempSensor(&cwire);
-  //Brown wire
   out = new TempSensor(&owire);
 
   hotflow = new FlowSensor(8, 553, 250);
@@ -150,7 +132,7 @@ void loop() {
     float hot_temp = hot->read_temp();
     float cold_temp = cold->read_temp();
     float out_temp = out->read_temp();
-    //double hot_proportion = hvalve->temp_to_hangle(set_temp, hot->read_temp(), cold->read_temp()) / 90.;
+
     double hot_proportion = hvalve->temp_to_hangle(set_temp - TEMPERATURE_OFFSET, hot_temp, cold_temp) / 90.;
     double cold_proportion = 1 - hot_proportion;
 
@@ -185,7 +167,6 @@ void loop() {
 
     output = clamp(output, -1, 1);
 
-    //Serial.println(output);
 
     double houtput, coutput;
     if(output > 0) {
@@ -201,23 +182,25 @@ void loop() {
       cvalve->open(coutput * 90);
     }
     
+    if(DEBUG){
+      Serial.print("Hot Temperature: ");
+      Serial.print(hot_temp);
+      Serial.println("F ");
+      Serial.print("Hot flow: ");
+      Serial.print(hfraw);
+      Serial.println("L/s");
 
-    // Serial.print("Hot Temperature: ");
-    // Serial.print(hot_temp);
-    // Serial.println("F ");
-    // Serial.print("Hot flow: ");
-    // Serial.print(hfraw);
-    // Serial.println("L/s");
 
+      Serial.print("Cold Temperature: ");
+      Serial.print(cold_temp);
+      Serial.println("F ");
+      Serial.print("Cold flow: ");
+      Serial.print(cfraw);
+      Serial.println("L/s");
 
-    // Serial.print("Cold Temperature: ");
-    // Serial.print(cold_temp);
-    // Serial.println("F ");
-    // Serial.print("Cold flow: ");
-    // Serial.print(cfraw);
-    // Serial.println("L/s");
+      Serial.print("Out Temperature: ");
+    }
 
-    //Serial.print("Out Temperature: ");
     if(out_temp >= 0) {
       Serial.println(out_temp);
       last_out_temp = out_temp;
@@ -231,10 +214,12 @@ void loop() {
       out_temp = hot_ratio * hot_temp + cold_ratio * cold_temp + TEMPERATURE_OFFSET;
       Serial.println(out_temp);
     }
-    //Serial.println("F ");
-    //Serial.print("Out flow: ");
-    //Serial.print(outflow->get_flow_rate());
-    //Serial.println("L/s");
+
+    if(DEBUG){
+      Serial.print("Out flow: ");
+      Serial.print(outflow->get_flow_rate());
+      Serial.println("L/s");
+    }
 
     if(Serial.available() > 0){
       read_serial();
